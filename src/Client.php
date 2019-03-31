@@ -33,6 +33,8 @@ class Client
         $time = microtime(true);
         $this->MadelineProto = new MadelineProto\API($this->sessionFile, $this->config);
         $this->MadelineProto->start();
+        $this->MadelineProto->async(true);
+        $this->MadelineProto->loop();
         $time = round(microtime(true) - $time, 3);
         echo PHP_EOL . "Client started: $time sec" . PHP_EOL;
     }
@@ -54,8 +56,9 @@ class Client
      * ]
      * </pre>
      * @return array
+     * @throws \Throwable
      */
-    public function getHistory($data): array
+    public function getHistory($data):array
     {
         $data = array_merge([
             'peer' => '',
@@ -68,7 +71,8 @@ class Client
             'hash' => 0,
         ], $data);
 
-        return $this->MadelineProto->messages->getHistory($data);
+
+        return \Amp\Promise\wait($this->MadelineProto->messages->getHistory($data));
     }
 
     /**
@@ -83,6 +87,7 @@ class Client
      * ]
      * </pre>
      * @return array
+     * @throws \Throwable
      */
     public function copyMessages($data): array
     {
@@ -93,10 +98,10 @@ class Client
             'id' => [],
         ], $data);
 
-        $response = $this->MadelineProto->channels->getMessages([
+        $response = \Amp\Promise\wait($this->MadelineProto->channels->getMessages([
             'channel' => $data['from_peer'],
             'id' => $data['id'],
-        ]);
+        ]));
         $result = [];
         if (!$response || !is_array($response) || !array_key_exists('messages', $response)) {
             return $result;
@@ -134,8 +139,9 @@ class Client
      * ]
      * </pre>
      * @return array
+     * @throws \Throwable
      */
-    public function searchGlobal(array $data): array
+    public function searchGlobal(array $data)
     {
         $data = array_merge([
             'q' => '',
@@ -143,11 +149,11 @@ class Client
             'offset_date' => 0,
             'limit' => 10,
         ], $data);
-        return $this->MadelineProto->messages->searchGlobal($data);
+        return \Amp\Promise\wait($this->MadelineProto->messages->searchGlobal($data));
     }
 
     /**
-     * @param $data
+     * @param array $data
      * <pre>
      * [
      *  'peer'              => '',
@@ -157,8 +163,9 @@ class Client
      * ]
      * </pre>
      * @return array
+     * @throws \Throwable
      */
-    public function sendMessage($data = []): array
+    public function sendMessage($data = [])
     {
         $data = array_merge([
             'peer' => '',
@@ -167,11 +174,11 @@ class Client
             'parse_mode' => 'HTML',
         ], $data);
 
-        return $this->MadelineProto->messages->sendMessage($data);
+        return \Amp\Promise\wait($this->MadelineProto->messages->sendMessage($data));
     }
 
     /**
-     * @param $data
+     * @param array $data
      * <pre>
      * [
      *  'peer'              => '',
@@ -182,8 +189,9 @@ class Client
      * ]
      * </pre>
      * @return array
+     * @throws \Throwable
      */
-    public function sendMedia($data = []): array
+    public function sendMedia($data = [])
     {
         $data = array_merge([
             'peer' => '',
@@ -193,7 +201,7 @@ class Client
             'parse_mode' => 'HTML',
         ], $data);
 
-        return $this->MadelineProto->messages->sendMedia($data);
+        return \Amp\Promise\wait($this->MadelineProto->messages->sendMedia($data));
     }
 
 
@@ -203,6 +211,7 @@ class Client
      * Внимание! Необходимо самостоятельно удалять временные файлы после их использования
      * @param $data
      * @return array
+     * @throws \Throwable
      */
     public function getMedia($data)
     {
@@ -215,7 +224,7 @@ class Client
 
 
         if (!$data['message']) {
-            $response = $this->MadelineProto->channels->getMessages($data);
+            $response = \Amp\Promise\wait($this->MadelineProto->channels->getMessages($data));
             $message = $response['messages'][0];
         } else {
             $message = $data['message'];
@@ -253,6 +262,7 @@ class Client
      * Внимание! Необходимо самостоятельно удалять временные файлы после их использования
      * @param array $data
      * @return array
+     * @throws \Throwable
      */
     public function getMediaPreview(array $data)
     {
@@ -263,7 +273,7 @@ class Client
         ], $data);
 
         if (!$data['message']) {
-            $response = $this->MadelineProto->channels->getMessages($data);
+            $response = \Amp\Promise\wait($this->MadelineProto->channels->getMessages($data));
             $message = $response['messages'][0];
         } else {
             $message = $data['message'];

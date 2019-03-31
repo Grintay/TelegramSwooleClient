@@ -118,17 +118,21 @@ class RequestCallback
         $this->api = explode('.', $this->api);
         switch (count($this->api)) {
             case 1:
-                return $this->client->MadelineProto->{$this->api[0]}(...$this->parameters);
+                $result = $this->client->MadelineProto->{$this->api[0]}(...$this->parameters);
                 break;
             case 2:
-                return $this->client->MadelineProto->{$this->api[0]}->{$this->api[1]}(...$this->parameters);
+                $result = $this->client->MadelineProto->{$this->api[0]}->{$this->api[1]}(...$this->parameters);
                 break;
             case 3:
-                return $this->client->MadelineProto->{$this->api[0]}->{$this->api[1]}->{$this->api[3]}(...$this->parameters);
+                $result = $this->client->MadelineProto->{$this->api[0]}->{$this->api[1]}->{$this->api[3]}(...$this->parameters);
                 break;
             default:
                 throw new \Exception('Incorrect method format');
         }
+        if ($result instanceof \Amp\Promise) {
+            return \Amp\Promise\wait($result);
+        }
+        return $result;
     }
 
     /**
